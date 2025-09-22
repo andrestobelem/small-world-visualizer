@@ -1,0 +1,5 @@
+{
+  "name": "Visualizador de Redes de Mundo Pequeño",
+  "description": "Explora el modelo de Watts-Strogatz ajustando los parámetros para ver la transición de una red regular a una red compleja.",
+  "requestFramePermissions": []
+}
