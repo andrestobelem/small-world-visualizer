@@ -1,12 +1,10 @@
-
-import { GraphNode, GraphLink } from '../types';
+import { GraphNode, GraphLink, GraphData } from '../types';
 
 export const generateWattsStrogatzGraph = (N: number, K: number, p: number, mode: 'rewire' | 'add'): { nodes: GraphNode[], links: GraphLink[] } => {
     const nodes: GraphNode[] = Array.from({ length: N }, (_, i) => ({ id: i }));
     const links: GraphLink[] = [];
     const edges = new Set<string>();
 
-    // 1. Create a regular ring lattice
     for (let i = 0; i < N; i++) {
         for (let j = 1; j <= K / 2; j++) {
             const target = (i + j) % N;
@@ -23,11 +21,11 @@ export const generateWattsStrogatzGraph = (N: number, K: number, p: number, mode
     }
 
     if (mode === 'rewire') {
-        // 2. Rewire edges with probability p
-        for (const link of links) {
+        const linksToRewire = [...links];
+        for (const link of linksToRewire) {
             if (Math.random() < p) {
-                const sourceId = (link.source as GraphNode).id ?? link.source as number;
-                const originalTargetId = (link.target as GraphNode).id ?? link.target as number;
+                const sourceId = (link.source as GraphNode)?.id ?? (link.source as number);
+                const originalTargetId = (link.target as GraphNode)?.id ?? (link.target as number);
                 
                 let newTargetId: number;
                 let isDuplicateOrSelfLoop: boolean;
@@ -51,16 +49,15 @@ export const generateWattsStrogatzGraph = (N: number, K: number, p: number, mode
             }
         }
     } else { // mode === 'add'
-        // 2. Add shortcut edges with probability p (Newman-Watts model)
-        const originalLinks = [...links]; // Iterate over a snapshot of original links
+        const originalLinks = [...links];
         for (const link of originalLinks) {
             if (Math.random() < p) {
-                const sourceId = (link.source as GraphNode).id ?? link.source as number;
+                const sourceId = (link.source as GraphNode)?.id ?? (link.source as number);
                 
                 let newTargetId: number;
                 let isDuplicateOrSelfLoop: boolean;
                 let attempts = 0;
-                const maxAttempts = N; // Failsafe for dense graphs
+                const maxAttempts = N;
 
                 do {
                     newTargetId = Math.floor(Math.random() * N);
@@ -103,7 +100,7 @@ const bfs = (startNodeId: number, adj: Map<number, number[]>): Map<number, numbe
 }
 
 export const calculateMetrics = (nodes: GraphNode[], links: GraphLink[]) => {
-    if (nodes.length === 0) {
+    if (nodes.length <= 1) {
         return { avgPathLength: 0, clusteringCoeff: 0 };
     }
 
@@ -112,11 +109,13 @@ export const calculateMetrics = (nodes: GraphNode[], links: GraphLink[]) => {
     links.forEach(link => {
         const sourceId = (link.source as GraphNode).id ?? link.source as number;
         const targetId = (link.target as GraphNode).id ?? link.target as number;
-        adj.get(sourceId)!.push(targetId);
-        adj.get(targetId)!.push(sourceId);
+        // Ensure both ends are in the provided nodes list
+        if(adj.has(sourceId) && adj.has(targetId)) {
+            adj.get(sourceId)!.push(targetId);
+            adj.get(targetId)!.push(sourceId);
+        }
     });
 
-    // Average Path Length
     let totalPathLength = 0;
     let pathCount = 0;
     for (let i = 0; i < nodes.length; i++) {
@@ -131,10 +130,9 @@ export const calculateMetrics = (nodes: GraphNode[], links: GraphLink[]) => {
     }
     const avgPathLength = pathCount > 0 ? totalPathLength / pathCount : 0;
 
-    // Clustering Coefficient
     let totalClusteringCoeff = 0;
     for (const node of nodes) {
-        const neighbors = adj.get(node.id)!;
+        const neighbors = Array.from(new Set(adj.get(node.id)!));
         const k = neighbors.length;
         if (k < 2) continue;
 
@@ -151,7 +149,7 @@ export const calculateMetrics = (nodes: GraphNode[], links: GraphLink[]) => {
         const possibleEdges = k * (k - 1) / 2;
         totalClusteringCoeff += triangleCount / possibleEdges;
     }
-    const clusteringCoeff = totalClusteringCoeff / nodes.length;
+    const clusteringCoeff = nodes.length > 0 ? totalClusteringCoeff / nodes.length : 0;
 
     return { avgPathLength, clusteringCoeff };
 };

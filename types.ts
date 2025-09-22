@@ -1,4 +1,3 @@
-
 import * as d3 from 'd3';
 
 export interface GraphNode extends d3.SimulationNodeDatum {

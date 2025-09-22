@@ -10,6 +10,8 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ graphData }) => {
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null);
     const simulationRef = useRef<d3.Simulation<GraphNode, GraphLink> | null>(null);
+    const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+    const hasInitializedZoom = useRef(false);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
     // Observe parent size for responsiveness
@@ -42,9 +44,7 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ graphData }) => {
         containerRef.current = svg.append("g");
         
         const linkGroup = containerRef.current.append("g")
-            .attr("class", "links")
-            .attr("stroke", "#4A5568")
-            .attr("stroke-opacity", 0.6);
+            .attr("class", "links");
 
         const nodeGroup = containerRef.current.append("g")
             .attr("class", "nodes");
@@ -73,6 +73,8 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ graphData }) => {
             });
 
         svg.call(zoom);
+        zoomRef.current = zoom;
+        hasInitializedZoom.current = false;
 
         return () => {
             simulation.stop();
@@ -119,24 +121,55 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ graphData }) => {
         const enterSelection = nodeSelection.enter()
             .append("circle")
             .attr("r", 6)
-            .attr("fill", "#2dd4bf")
             .attr("stroke", "#111827")
             .attr("stroke-width", 1.5)
             .call(drag);
         
-        enterSelection.merge(nodeSelection).style("cursor", "grab");
-
+        enterSelection.merge(nodeSelection)
+            .attr("class", "node")
+            .style("cursor", "grab");
 
         const linkSelection = containerRef.current.select<SVGGElement>(".links")
             .selectAll<SVGLineElement, GraphLink>("line")
             .data(graphData.links, d => `${(d.source as GraphNode).id}-${(d.target as GraphNode).id}`);
 
         linkSelection.exit().remove();
-        linkSelection.enter()
-            .append("line")
-            .attr("stroke-width", 1.5);
+        linkSelection.enter().append("line")
+            .merge(linkSelection)
+            .attr("stroke-width", 1.5)
+            .attr("stroke", "#4A5568")
+            .attr("stroke-opacity", 0.6);
 
-        simulation.alpha(0.3).restart();
+
+        simulation.alpha(1).restart();
+
+        if (!hasInitializedZoom.current && width > 0 && graphData.nodes.length > 0 && zoomRef.current) {
+            const svg = d3.select(svgRef.current!);
+            
+            // Heurística para el diámetro "natural" del grafo basado en el número de nodos.
+            const graphRadius = 40 * Math.sqrt(graphData.nodes.length);
+            const graphDiameter = graphRadius * 2;
+            
+            // Calcula la escala necesaria para ajustar este diámetro en la ventana, con algo de relleno (85%).
+            const scaleToFit = Math.min(width / graphDiameter, height / graphDiameter) * 0.85;
+
+            // Limita la escala para evitar niveles de zoom extremos.
+            const initialScale = Math.max(0.1, Math.min(1.2, scaleToFit));
+
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // Calcula la traslación para centrar el grafo después de escalar.
+            const tx = centerX * (1 - initialScale);
+            const ty = centerY * (1 - initialScale);
+
+            const initialTransform = d3.zoomIdentity.translate(tx, ty).scale(initialScale);
+            
+            // Aplica la transformación calculada con una transición suave.
+            svg.transition().duration(750).call(zoomRef.current.transform, initialTransform);
+            
+            hasInitializedZoom.current = true;
+        }
 
     }, [graphData, dimensions]);
 

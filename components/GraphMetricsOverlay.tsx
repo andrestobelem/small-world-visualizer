@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface GraphMetricsOverlayProps {
@@ -23,14 +22,14 @@ const MetricItem: React.FC<{ label: string; value: string | number; isLoading: b
 const GraphMetricsOverlay: React.FC<GraphMetricsOverlayProps> = ({ metrics, isLoading }) => {
     return (
         <div className="absolute top-4 left-4 bg-gray-900/50 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-700 z-10">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 flex-wrap">
                 <MetricItem 
-                    label="Long. Media Camino"
+                    label="Camino Medio"
                     value={metrics.avgPathLength.toFixed(3)}
                     isLoading={isLoading}
                 />
                 <MetricItem 
-                    label="Coef. Agrupamiento"
+                    label="Agrupamiento"
                     value={metrics.clusteringCoeff.toFixed(3)}
                     isLoading={isLoading}
                 />

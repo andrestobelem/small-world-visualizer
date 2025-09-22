@@ -1,11 +1,10 @@
-
 import React from 'react';
 
 type ReconnectionMode = 'rewire' | 'add';
 
 interface ControlPanelProps {
-    params: { N: number; K: number; p: number; reconnectionMode: ReconnectionMode };
-    onParamsChange: (newParams: { N: number; K: number; p: number; reconnectionMode: ReconnectionMode }) => void;
+    params: { N: number; K: number; p: number; reconnectionMode: ReconnectionMode; };
+    onParamsChange: (newParams: { N: number; K: number; p: number; reconnectionMode: ReconnectionMode; }) => void;
     isLoading: boolean;
 }
 
@@ -32,25 +31,17 @@ const Slider: React.FC<{ label: string; id: string; value: number; min: number; 
 
 const ControlPanel: React.FC<ControlPanelProps> = ({ params, onParamsChange, isLoading }) => {
     
-    const handleNChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const N = parseInt(e.target.value, 10);
-        const K = Math.min(params.K, N - 1);
-        onParamsChange({ ...params, N, K });
+    const handleParamChange = (paramName: string, value: number | string) => {
+        const newParams = { ...params, [paramName]: value };
+        
+        if (paramName === 'N') {
+            const N = value as number;
+            newParams.K = Math.min(params.K, N - 1);
+        }
+
+        onParamsChange(newParams);
     };
 
-    const handleKChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const K = parseInt(e.target.value, 10);
-        onParamsChange({ ...params, K });
-    };
-
-    const handlePChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const p = parseFloat(e.target.value);
-        onParamsChange({ ...params, p });
-    };
-
-    const handleModeChange = (mode: ReconnectionMode) => {
-        onParamsChange({ ...params, reconnectionMode: mode });
-    };
 
     return (
         <div className="bg-gray-800/50 p-4 rounded-2xl shadow-lg border border-slate-700">
@@ -63,7 +54,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onParamsChange, isL
                     min={10}
                     max={100}
                     step={1}
-                    onChange={handleNChange}
+                    onChange={(e) => handleParamChange('N', parseInt(e.target.value, 10))}
                 />
                 <Slider 
                     label="Vecinos por Nodo (K)"
@@ -72,7 +63,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onParamsChange, isL
                     min={2}
                     max={params.N > 1 ? params.N - 1 : 2}
                     step={2}
-                    onChange={handleKChange}
+                    onChange={(e) => handleParamChange('K', parseInt(e.target.value, 10))}
                 />
                 <Slider 
                     label="Probabilidad de Reconexión (p)"
@@ -81,7 +72,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onParamsChange, isL
                     min={0}
                     max={1}
                     step={0.01}
-                    onChange={handlePChange}
+                    onChange={(e) => handleParamChange('p', parseFloat(e.target.value))}
                     displayValue={params.p.toFixed(2)}
                 />
             </div>
@@ -92,7 +83,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onParamsChange, isL
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                     <button
-                        onClick={() => handleModeChange('rewire')}
+                        onClick={() => handleParamChange('reconnectionMode', 'rewire')}
                         className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-cyan-500 ${
                             params.reconnectionMode === 'rewire' ? 'bg-cyan-500 text-white shadow-md' : 'bg-slate-700 hover:bg-slate-600'
                         }`}
@@ -100,7 +91,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ params, onParamsChange, isL
                         Reconectar
                     </button>
                     <button
-                        onClick={() => handleModeChange('add')}
+                        onClick={() => handleParamChange('reconnectionMode', 'add')}
                         className={`px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-cyan-500 ${
                             params.reconnectionMode === 'add' ? 'bg-cyan-500 text-white shadow-md' : 'bg-slate-700 hover:bg-slate-600'
                         }`}
