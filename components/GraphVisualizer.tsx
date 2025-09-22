@@ -146,15 +146,16 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ graphData }) => {
         if (!hasInitializedZoom.current && width > 0 && graphData.nodes.length > 0 && zoomRef.current) {
             const svg = d3.select(svgRef.current!);
             
-            // Heurística para el diámetro "natural" del grafo basado en el número de nodos.
-            const graphRadius = 40 * Math.sqrt(graphData.nodes.length);
+            // Heurística mejorada para el diámetro "natural" del grafo.
+            // Se aumenta el factor para estimar un tamaño final más grande, resultando en un mayor zoom-out inicial.
+            const graphRadius = 50 * Math.sqrt(graphData.nodes.length);
             const graphDiameter = graphRadius * 2;
             
-            // Calcula la escala necesaria para ajustar este diámetro en la ventana, con algo de relleno (85%).
-            const scaleToFit = Math.min(width / graphDiameter, height / graphDiameter) * 0.85;
+            // Calcula la escala necesaria para ajustar este diámetro en la ventana, con un poco menos de relleno.
+            const scaleToFit = Math.min(width / graphDiameter, height / graphDiameter) * 0.9;
 
-            // Limita la escala para evitar niveles de zoom extremos.
-            const initialScale = Math.max(0.1, Math.min(1.2, scaleToFit));
+            // Limita la escala, pero permite un zoom-out mayor si es necesario.
+            const initialScale = Math.max(0.05, Math.min(1.2, scaleToFit));
 
             const centerX = width / 2;
             const centerY = height / 2;
