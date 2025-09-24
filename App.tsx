@@ -80,7 +80,7 @@ const App: React.FC = () => {
             </header>
             
             <div className="flex-grow flex flex-col lg:flex-row gap-4 lg:gap-6">
-                <main className="h-[60vh] lg:h-auto flex-grow lg:w-3/4 xl:w-4/5 bg-gray-800/50 rounded-2xl shadow-2xl shadow-cyan-500/10 border border-slate-700 overflow-hidden relative">
+                <main className="h-[60vh] flex-grow lg:w-3/4 xl:w-4/5 bg-gray-800/50 rounded-2xl shadow-2xl shadow-cyan-500/10 border border-slate-700 overflow-hidden relative">
                      <GraphMetricsOverlay metrics={metrics} isLoading={isLoading} />
                      <GraphVisualizer key={`${params.N}-${params.K}`} graphData={memoizedGraphData} />
                 </main>

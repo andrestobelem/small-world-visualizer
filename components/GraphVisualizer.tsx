@@ -8,6 +8,7 @@ interface GraphVisualizerProps {
 
 const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ graphData }) => {
     const svgRef = useRef<SVGSVGElement>(null);
+    const containerDivRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<d3.Selection<SVGGElement, unknown, null, undefined> | null>(null);
     const simulationRef = useRef<d3.Simulation<GraphNode, GraphLink> | null>(null);
     const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
@@ -23,14 +24,14 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ graphData }) => {
             }
         });
 
-        const parent = svgRef.current?.parentElement;
-        if (parent) {
-            resizeObserver.observe(parent);
+        const divElement = containerDivRef.current;
+        if (divElement) {
+            resizeObserver.observe(divElement);
         }
 
         return () => {
-            if (parent) {
-                resizeObserver.unobserve(parent);
+            if (divElement) {
+                resizeObserver.unobserve(divElement);
             }
         };
     }, []);
@@ -175,7 +176,7 @@ const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ graphData }) => {
     }, [graphData, dimensions]);
 
     return (
-      <div className="w-full h-full cursor-grab active:cursor-grabbing">
+      <div ref={containerDivRef} className="w-full h-full cursor-grab active:cursor-grabbing relative">
         <svg ref={svgRef} width={dimensions.width} height={dimensions.height} className="transition-opacity duration-500" style={{opacity: graphData.nodes.length > 0 ? 1 : 0}}>
         </svg>
       </div>
